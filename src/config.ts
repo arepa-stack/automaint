@@ -19,6 +19,8 @@ export const config = {
   uploadDir: env('UPLOAD_DIR', './uploads'),
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  // bucket único; las categorías (listings, receipts...) van como carpetas internas
+  supabaseBucket: env('SUPABASE_BUCKET', 'automaint'),
 
   // integraciones opcionales: sin credenciales quedan en modo log-only
   resendApiKey: process.env.RESEND_API_KEY,

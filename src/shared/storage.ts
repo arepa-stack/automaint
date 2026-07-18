@@ -20,7 +20,8 @@ export async function saveFile(bucket: Bucket, file: File): Promise<string> {
   const name = `${crypto.randomUUID()}.${ext}`
 
   if (supabase) {
-    const { error } = await supabase.storage.from(bucket).upload(name, file, { contentType: file.type })
+    const { error } = await supabase.storage.from(config.supabaseBucket)
+      .upload(`${bucket}/${name}`, file, { contentType: file.type })
     if (error) throw new Error(`Supabase Storage: ${error.message}`)
   } else {
     await Bun.write(`${config.uploadDir}/${bucket}/${name}`, file)
@@ -31,9 +32,7 @@ export async function saveFile(bucket: Bucket, file: File): Promise<string> {
 /** Convierte un path interno en URL descargable por el cliente. */
 export function fileUrl(path: string | null): string | null {
   if (!path) return null
-  if (supabase) {
-    const [bucket, ...rest] = path.split('/')
-    return supabase.storage.from(bucket!).getPublicUrl(rest.join('/')).data.publicUrl
-  }
+  if (supabase)
+    return supabase.storage.from(config.supabaseBucket).getPublicUrl(path).data.publicUrl
   return `${config.appBaseUrl}/files/${path}`
 }
