@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia'
-import { and, asc, desc, eq, gte, ilike, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, ilike, isNotNull, lte, sql } from 'drizzle-orm'
 import { db } from '../db/client'
 import {
   carListings, expenses, favorites, listingPhotos, maintenanceItems, partners, searchAlerts, users,
@@ -59,11 +59,15 @@ export const listingsModule = new Elysia({ tags: ['listings'] })
     // historial verificado: servicios completados registrados en AutoMaint
     let verifiedHistory = null
     if (listing.vehicleId) {
+      // solo servicios realmente completados ("ya lo hice"), no el baseline de creación
       const services = await db.select({
         name: maintenanceItems.name,
         lastServiceKm: maintenanceItems.lastServiceKm,
         lastServiceDate: maintenanceItems.lastServiceDate,
-      }).from(maintenanceItems).where(eq(maintenanceItems.vehicleId, listing.vehicleId))
+      }).from(maintenanceItems).where(and(
+        eq(maintenanceItems.vehicleId, listing.vehicleId),
+        isNotNull(maintenanceItems.lastCompletedAt),
+      ))
       const expenseCount = await db.select({ count: sql<number>`count(*)::int` })
         .from(expenses).where(and(eq(expenses.vehicleId, listing.vehicleId), eq(expenses.type, 'mantenimiento')))
       verifiedHistory = { services, maintenanceRecords: expenseCount[0]!.count }

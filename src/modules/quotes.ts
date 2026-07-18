@@ -34,7 +34,7 @@ function candidates(item: QuoteItem, all: PartRow[]) {
 }
 
 const partPublic = (p: PartRow) => ({
-  id: p.id, name: p.name, price: p.price, currency: p.currency,
+  id: p.id, name: p.name, description: p.description, price: p.price, currency: p.currency,
   partnerId: p.partnerId, partnerName: p.partnerName, partnerCity: p.partnerCity,
 })
 
@@ -147,6 +147,11 @@ export const quotesModule = new Elysia({ tags: ['quotes'] })
     return {
       quote,
       missing,
+      // todas las alternativas por item (distintas marcas/proveedores), ordenadas por precio
+      items: perItem.map(({ item, cands }) => ({
+        name: item.name, qty: item.qty,
+        options: cands.slice(0, 6).map(partPublic),
+      })),
       bestPrices: { groups, total: bestTotal.toFixed(2) },
       singleProvider: single,
     }

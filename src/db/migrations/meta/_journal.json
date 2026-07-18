@@ -15,6 +15,13 @@
       "when": 1784409000604,
       "tag": "0001_short_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784414262101,
+      "tag": "0002_orange_metal_master",
+      "breakpoints": true
     }
   ]
 }

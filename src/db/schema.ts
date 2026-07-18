@@ -98,6 +98,8 @@ export const maintenanceItems = pgTable('maintenance_items', {
   intervalMonths: integer('interval_months'),
   lastServiceKm: integer('last_service_km'),
   lastServiceDate: date('last_service_date'),
+  // solo se setea al marcar "ya lo hice" — distingue servicio real del baseline de creación
+  lastCompletedAt: timestamp('last_completed_at'),
   dueKm: integer('due_km'),
   dueDate: date('due_date'),
   status: text('status', { enum: ['ok', 'upcoming', 'overdue'] }).notNull().default('ok'),

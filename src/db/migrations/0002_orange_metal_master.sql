@@ -1,0 +1,1 @@
+ALTER TABLE "maintenance_items" ADD COLUMN "last_completed_at" timestamp;

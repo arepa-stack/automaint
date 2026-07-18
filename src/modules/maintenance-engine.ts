@@ -121,6 +121,7 @@ export async function completeItem(item: Item, doneKm: number, doneDate: Date) {
   const [updated] = await db.update(maintenanceItems).set({
     lastServiceKm: doneKm,
     lastServiceDate: toDateStr(doneDate),
+    lastCompletedAt: new Date(),
     dueKm: item.intervalKm ? doneKm + item.intervalKm : null,
     dueDate: item.intervalMonths ? toDateStr(addMonths(doneDate, item.intervalMonths)) : null,
     status: 'ok',
