@@ -1,0 +1,41 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # postgres local por defecto; apuntar a Supabase cambiando DATABASE_URL en .env
+      DATABASE_URL: ${DATABASE_URL:-postgres://automaint:automaint@postgres:5432/automaint}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      OAUTH_MOCK: ${OAUTH_MOCK:-true}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      UPLOAD_DIR: /data/uploads
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: automaint
+      POSTGRES_PASSWORD: automaint
+      POSTGRES_DB: automaint
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U automaint"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  uploads:
