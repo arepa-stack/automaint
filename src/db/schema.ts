@@ -188,6 +188,19 @@ export const appointments = pgTable('appointments', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, t => [index('appointments_partner_idx').on(t.partnerId), index('appointments_user_idx').on(t.userId)])
 
+// Presupuesto que el taller carga tras revisar el vehículo en una cita
+export const quotes = pgTable('quotes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  appointmentId: uuid('appointment_id').notNull().references(() => appointments.id, { onDelete: 'cascade' }),
+  partnerId: uuid('partner_id').notNull().references(() => partners.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['sent', 'approved', 'rejected'] }).notNull().default('sent'),
+  // repuestos que el taller indica que hacen falta
+  items: jsonb('items').$type<{ name: string; qty: number; category?: string; refPrice?: string }[]>().notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, t => [index('quotes_user_idx').on(t.userId), index('quotes_partner_idx').on(t.partnerId)])
+
 export const reviews = pgTable('reviews', {
   id: uuid('id').primaryKey().defaultRandom(),
   partnerId: uuid('partner_id').notNull().references(() => partners.id, { onDelete: 'cascade' }),

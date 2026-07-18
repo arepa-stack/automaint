@@ -19,6 +19,7 @@ import { reviewsModule } from './modules/reviews'
 import { offersModule } from './modules/offers'
 import { partsModule } from './modules/parts'
 import { ordersModule } from './modules/orders'
+import { quotesModule } from './modules/quotes'
 import { listingsModule } from './modules/listings'
 import { adminModule } from './modules/admin'
 
@@ -68,6 +69,7 @@ export const app = new Elysia()
   .use(offersModule)
   .use(partsModule)
   .use(ordersModule)
+  .use(quotesModule)
   .use(listingsModule)
   .use(adminModule)
 
