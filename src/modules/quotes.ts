@@ -72,6 +72,19 @@ export const quotesModule = new Elysia({ tags: ['quotes'] })
     }),
   })
 
+  // Presupuestos enviados por el taller (partner)
+  .get('/partners/me/quotes', async ({ user }) => {
+    const p = await getMyPartner(user)
+    return db.select({
+      id: quotes.id, appointmentId: quotes.appointmentId, status: quotes.status,
+      items: quotes.items, notes: quotes.notes, createdAt: quotes.createdAt,
+      scheduledAt: appointments.scheduledAt,
+    }).from(quotes)
+      .innerJoin(appointments, eq(appointments.id, quotes.appointmentId))
+      .where(eq(quotes.partnerId, p.id))
+      .orderBy(desc(quotes.createdAt))
+  })
+
   // Mis presupuestos (usuario)
   .get('/quotes', async ({ user }) => {
     const rows = await db.select({

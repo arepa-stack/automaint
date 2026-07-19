@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '../db/client'
-import { partnerDocuments, partners, users, workshopSchedules, workshopServices } from '../db/schema'
+import { appointments, orders, partnerDocuments, partners, parts, quotes, users, workshopSchedules, workshopServices } from '../db/schema'
 import { authed, type AuthUser } from '../shared/auth'
 import { badRequest, notFound } from '../shared/errors'
 import { saveFile, fileUrl } from '../shared/storage'
@@ -98,6 +98,43 @@ export const partnersModule = new Elysia({ prefix: '/partners', tags: ['partners
     const [updated] = await db.update(partners).set(body).where(eq(partners.id, p.id)).returning()
     return updated
   }, { body: t.Partial(partnerBody) })
+
+  // Métricas del partner: proveedor (productos/pedidos) y taller (citas/presupuestos)
+  .get('/me/stats', async ({ user }) => {
+    const p = await getMyPartner(user)
+
+    const [partStats] = await db.select({
+      total: sql<number>`count(*)::int`,
+      active: sql<number>`count(*) filter (where active)::int`,
+      views: sql<number>`coalesce(sum(views), 0)::int`,
+      clicks: sql<number>`coalesce(sum(clicks), 0)::int`,
+    }).from(parts).where(eq(parts.partnerId, p.id))
+
+    const orderRows = await db.select({
+      status: orders.status,
+      count: sql<number>`count(*)::int`,
+      total: sql<string>`coalesce(sum(total), 0)::text`,
+    }).from(orders).where(eq(orders.partnerId, p.id)).groupBy(orders.status)
+
+    const apptRows = await db.select({
+      status: appointments.status,
+      count: sql<number>`count(*)::int`,
+    }).from(appointments).where(eq(appointments.partnerId, p.id)).groupBy(appointments.status)
+
+    const [quoteStats] = await db.select({
+      total: sql<number>`count(*)::int`,
+      approved: sql<number>`count(*) filter (where status = 'approved')::int`,
+    }).from(quotes).where(eq(quotes.partnerId, p.id))
+
+    return {
+      rating: p.rating,
+      reviewCount: p.reviewCount,
+      parts: partStats,
+      orders: Object.fromEntries(orderRows.map(r => [r.status, { count: r.count, total: r.total }])),
+      appointments: Object.fromEntries(apptRows.map(r => [r.status, r.count])),
+      quotes: quoteStats,
+    }
+  })
 
   .post('/me/documents', async ({ user, body }) => {
     const p = await getMyPartner(user)

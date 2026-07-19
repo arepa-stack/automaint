@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia'
-import { and, eq, gte, inArray, lt } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, lt } from 'drizzle-orm'
 import { db } from '../db/client'
 import { appointments, partners, workshopSchedules, workshopServices } from '../db/schema'
 import { authed } from '../shared/auth'
@@ -50,6 +50,13 @@ export const workshopAdminModule = new Elysia({ prefix: '/partners/me', tags: ['
     await db.delete(workshopServices)
       .where(and(eq(workshopServices.id, params.id), eq(workshopServices.partnerId, p.id)))
     return { ok: true }
+  })
+
+  .get('/schedules', async ({ user }) => {
+    const p = await getMyPartner(user)
+    return db.select().from(workshopSchedules)
+      .where(eq(workshopSchedules.partnerId, p.id))
+      .orderBy(asc(workshopSchedules.weekday))
   })
 
   // Reemplaza el horario semanal completo de una vez

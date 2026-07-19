@@ -12,7 +12,7 @@ Arquitectura de repos separados:
 |------|--------|-------|
 | `automaint-api` (este) | ✅ Iteración 1 completa | Bun + Elysia + Drizzle + Supabase |
 | `automaint-app` | ✅ APK Android funcional (MVP) | Kotlin Multiplatform + Compose |
-| `automaint-web-partners` | ⬜ Pendiente (iteración 3) | React + Vite |
+| `automaint-web-partners` | ✅ Portal funcional (taller + proveedor) | React + Vite |
 | `automaint-web-admin` | ⬜ Pendiente (iteración 3) | React + Vite |
 
 ---
@@ -72,9 +72,16 @@ Arquitectura de repos separados:
 - [ ] Limpiar datos de prueba de los tests en Supabase (usuarios `*@test.com`) si estorban.
 
 ### Iteración 3 — Webs React
-- [ ] `automaint-web-partners`: portal único con roles (taller: citas/servicios/horarios/ofertas · proveedor: productos/pedidos/estadísticas · concesionario: listados).
+- [x] `automaint-web-partners` (2026-07-19): portal para **taller** (citas confirmar/completar/rechazar + cargar presupuesto, presupuestos enviados, servicios CRUD, horario semanal) y **proveedor** (productos CRUD + foto + compatibilidad, pedidos con cambio de estado, stats de ventas). Registro self-service: crea cuenta → formulario de negocio → queda `pending` hasta aprobación admin (banner visible). Config de servidor en Login/Perfil (localStorage, default `automaint.nibs-tech.com`). Stack: React 18 + Vite 5 + react-router (HashRouter), CSS plano, sin UI libs. `npm install && npm run dev` (puerto 5174) o `npm run build`. Concesionario/servicios: solo Dashboard+Perfil (`ponytail:` vistas propias cuando haga falta).
 - [ ] `automaint-web-admin`: métricas, aprobación de partners, moderación de listados, finanzas.
-- [ ] Generar tipos desde OpenAPI (`/swagger/json`) con `openapi-typescript`.
+- [ ] Generar tipos desde OpenAPI (`/swagger/json`) con `openapi-typescript` (la web usa tipos manuales en `src/api.ts`).
+
+### Modo partner (opción C híbrida, 2026-07-19)
+Decisión: web para gestión pesada (catálogo/horarios/documentos), APK solo acciones urgentes del partner. WhatsApp sigue siendo canal de cobro.
+- **API — endpoints nuevos**: `GET /partners/me/schedules` (leer horario para editarlo), `GET /partners/me/quotes` (presupuestos enviados por el taller, con `scheduledAt` de la cita), `GET /partners/me/stats` (rating, parts total/active/views/clicks, orders por estado con totales, appointments por estado, quotes total/aprobados). Todo lo demás ya existía.
+- **APK — modo partner**: login con cuenta rol `partner` → bottom bar cambia según tipo de negocio (`GET /partners/me`): taller → tab **Citas** (`PartnerAppointmentsScreen.kt`: confirmar/rechazar/completar + bottom sheet para cargar presupuesto con items dinámicos) · repuestos → tab **Pedidos** (`PartnerOrdersScreen.kt`: confirmar/entregar/cancelar) · ambos + Perfil. Rol persistido en SharedPreferences (`saveRole/loadRole` en `Storage.android.kt`, patrón igual a token); `Api.role` se setea en login y se limpia en logout. Nuevos DTOs/endpoints partner al final de `Api.kt`.
+- ⚠️ **Compilar APK**: `cd automaint-app && .\gradlew :composeApp:assembleDebug` → `composeApp/build/outputs/apk/debug/composeApp-debug.apk`. Probar con usuarios mock partner (`*@automaint.app` / `Proveedor1234!`).
+- ⚠️ **Redeploy API pendiente**: los 3 endpoints nuevos + `/quotes` corren solo en local; `automaint.nibs-tech.com` necesita redeploy.
 
 ### Iteración 4 — Producción
 - [ ] **OAuth real** Google/Apple (validar `id_token`; el endpoint mock ya tiene el contrato final).
@@ -98,7 +105,7 @@ Arquitectura de repos separados:
 ### App móvil (siguientes pantallas)
 - [x] Talleres cercanos + agendar cita (2026-07-18): `WorkshopsScreen.kt` + `WorkshopDetailScreen.kt` — ubicación real del teléfono (LocationManager, fallback Caracas si no hay fix), `/partners/nearby` radio 50→200 km, botón "mapa" abre Google Maps (`geo:` URI, sin SDK), detalle con servicios/fecha/slots → `POST /appointments`, "Mis citas" en bottom sheet. Mock: 5 talleres aprobados (Chacao, Las Mercedes, Los Ruices, La Candelaria, Valencia) con servicios y horario Lun-Sáb 08:00-17:00. WhatsApp de TODOS los partners mock → +584123870654 (número real del dueño para pruebas). Mapa embebido con **osmdroid** (OpenStreetMap, sin API key): toggle Lista/Mapa en Talleres, pins seleccionables → card "Ver y agendar". Navegación con **bottom bar** de 5 tabs (Inicio, Talleres, Market, Citas, Perfil); top bar solo campana de notificaciones. Tab Citas con cancelación; tab Perfil con servidor y logout.
 - [x] Marketplace de repuestos con carrito → WhatsApp (2026-07-18): `MarketplaceScreen.kt` — búsqueda con debounce, filtro por vehículo (compatibilidad make/model/year), chips de categoría, carrito de un proveedor, `POST /orders` → abre `whatsappUrl`. Data mock en prod: 3 proveedores aprobados (Lubricantes El Motor/Caracas, AutoPartes Valencia, Baterías y Más/Maracaibo, teléfonos ficticios 58412…/58414…/58416…) + 18 repuestos, usuarios `*@automaint.app` password `Proveedor1234!`.
-- [ ] Marketplace de carros (publicar/buscar/favoritos).
+- [x] Marketplace de carros (2026-07-18): tab Market con toggle Repuestos|Carros (`CarsScreens.kt`). Publicar desde vehículo propio (hereda historial verificado) con precio/descripción/WhatsApp + subir fotos (galería → multipart, `rememberImagePicker` expect/actual). Detalle: fotos, precio, historial verificado (servicios con km/fecha + nº de gastos) y botón **Contactar** → wa.me con mensaje prellenado. Imágenes con `RemoteImage` (Ktor + BitmapFactory, sin Coil; `ponytail:` sin caché). Mock: Corolla 2016 ($8500) y Aveo 2013 ($4200) aprobados. ⚠️ Listados nuevos quedan `pending` — aprobar con `seed-listings.js` (aprueba todos los pendientes) o web admin (iteración 3).
 - [ ] Foto del vehículo y facturas (upload).
 - [ ] Modo offline (SQLDelight) y refresh automático de token.
 - [ ] Target iOS (requiere macOS).
