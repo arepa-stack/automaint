@@ -26,6 +26,12 @@ export const config = {
   resendApiKey: process.env.RESEND_API_KEY,
   emailFrom: env('EMAIL_FROM', 'AutoMaint <no-reply@automaint.app>'),
   appBaseUrl: env('APP_BASE_URL', 'http://localhost:3000'),
+
+  // diagnóstico IA (Google AI Studio free tier); sin key = modo mock
+  geminiApiKey: process.env.GEMINI_API_KEY,
+  geminiModel: env('GEMINI_MODEL', 'gemini-flash-lite-latest'),
+  freeDailyDiagnostics: Number(env('FREE_DAILY_DIAGNOSTICS', '3')),
+  freeDailyListingQuestions: Number(env('FREE_DAILY_LISTING_QUESTIONS', '1')),
 }
 
 if (config.jwtSecret === 'dev-secret-change-me')

@@ -22,6 +22,27 @@
       "when": 1784414262101,
       "tag": "0002_orange_metal_master",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784570013233,
+      "tag": "0003_chunky_martin_li",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784572818940,
+      "tag": "0004_dear_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784573565006,
+      "tag": "0005_eager_spitfire",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,8 @@
 import {
   pgTable, uuid, text, integer, real, boolean, timestamp, date, numeric,
-  jsonb, serial, uniqueIndex, index,
+  jsonb, serial, uniqueIndex, index, primaryKey,
 } from 'drizzle-orm/pg-core'
+import type { DiagnosisResult } from '../shared/llm'
 
 // ── Usuarios y sesiones ────────────────────────────────────────────────────
 
@@ -340,6 +341,40 @@ export const notifications = pgTable('notifications', {
   readAt: timestamp('read_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, t => [index('notifications_user_idx').on(t.userId)])
+
+// ── Diagnóstico IA ───────────────────────────────────────────────────────────
+
+export const diagnostics = pgTable('diagnostics', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  cacheKey: text('cache_key').notNull().unique(), // make|model|year|símtomaNormalizado
+  make: text('make').notNull(),
+  model: text('model').notNull(),
+  year: integer('year').notNull(),
+  symptom: text('symptom').notNull(), // texto original del primer usuario que lo generó
+  result: jsonb('result').$type<DiagnosisResult>().notNull(),
+  source: text('source').notNull().default('llm'), // 'llm' | 'mock'
+  hits: integer('hits').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Cupo diario por usuario y tipo (kind: 'diagnosis' | 'listing_q'): 1 fila por usuario/día/tipo
+export const diagnosticUsage = pgTable('diagnostic_usage', {
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  day: date('day').notNull(),
+  kind: text('kind').notNull().default('diagnosis'),
+  count: integer('count').notNull().default(0),
+}, t => [primaryKey({ columns: [t.userId, t.day, t.kind] })])
+
+// Historial de diagnósticos por vehículo → alimenta el contexto de futuras consultas
+// (la IA "recuerda" qué se diagnosticó antes en este carro). Distinto del caché global.
+export const vehicleDiagnosisLog = pgTable('vehicle_diagnosis_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  vehicleId: uuid('vehicle_id').notNull().references(() => vehicles.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  symptom: text('symptom').notNull(),
+  result: jsonb('result').$type<DiagnosisResult>().notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, t => [index('vehicle_dx_log_vehicle_idx').on(t.vehicleId)])
 
 // ── Admin ──────────────────────────────────────────────────────────────────
 

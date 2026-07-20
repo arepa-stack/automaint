@@ -22,6 +22,7 @@ import { ordersModule } from './modules/orders'
 import { quotesModule } from './modules/quotes'
 import { listingsModule } from './modules/listings'
 import { adminModule } from './modules/admin'
+import { diagnosticsModule } from './modules/diagnostics'
 
 if (config.runMigrations) await runMigrations()
 
@@ -72,6 +73,7 @@ export const app = new Elysia()
   .use(quotesModule)
   .use(listingsModule)
   .use(adminModule)
+  .use(diagnosticsModule)
 
 if (import.meta.main) {
   app.listen(config.port)
